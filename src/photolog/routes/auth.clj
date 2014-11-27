@@ -3,17 +3,34 @@
             [noir.session :as session]
             [noir.util.crypt :as crypt]
             [noir.validation :as vali]
-            [noir.response :refer [redirect]]))
+            [noir.response :refer [redirect]]
+            [ring.util.anti-forgery :refer [anti-forgery-field]]
+            [hiccup.form :refer [form-to text-field password-field label submit-button]]
+            [photolog.models.db :as db]
+            [photolog.views.layout :as layout]))
 
 (defn login-page []
-  ; add layout/common or base
-  [:h1 "Login"])
+  (layout/common
+    (form-to [:post "/gory"]
+             (anti-forgery-field)
+             (label "user" "user")
+             (text-field "user")
+             (label "pass" "password")
+             (password-field "pass")
+             (submit-button "Descend"))))
 
-(defn handle-login [user pass pass1]
-  (prn (str "loggin in user " user)))
+(defn handle-login [user pass]
+  (let [user (db/get-user user)]
+    (if (and user (crypt/compare pass (:password user)))
+      (do (session/put! :user user) (redirect "/admin"))
+      (do (session/flash-put! :error "Nope") (redirect "/")))))
+
+
 
 (defn handle-logout []
-  (prn (str "loggin out user " (session/get :username))))
+  (session/clear!)
+  (session/flash-put! :notice "Logged out!")
+  (redirect "/"))
 
 (defroutes auth-routes
   (GET "/gory" [] (login-page))

@@ -1,16 +1,16 @@
 (ns photolog.models.db
-  (:require [clojure.java.jdbc :as sql]
+  (:require [clojure.java.jdbc.deprecated :as sql]
             [noir.util.crypt :as crypt]))
 
 
-(def db {:subprotocol "postgresl"
+(def db {:subprotocol "postgresql"
          :subname "//localhost/photolog_dev"
          :user "developer"
          :password "a" })
 
 (defn create-table-photos []
   (sql/with-connection db
-    (sql/create-table 
+    (sql/create-table
       :photos
       [:id "SERIAL PRIMARY KEY"]
       [:created_at "TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP"]
@@ -25,14 +25,14 @@
 
 (defn create-table-users []
   (sql/with-connection db
-    (sql/create-table 
+    (sql/create-table
       :users
-      [:id "SERIAL PRIMAR KEY"]
+      [:id "SERIAL PRIMARY KEY"]
       [:username "VARCHAR(64) NOT NULL"]
       [:password "VARCHAR(255) NOT NULL"]
       [:created_at "TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP"]
       [:updated_at "TIMESTAMPTZ DEFAULT NULL"])
-    (sql/do-commands "CREATE INDEX idx_users_username ON (users)")))
+    (sql/do-commands "CREATE INDEX idx_users_username ON users (username)")))
 
 (defn get-photos [& {:keys [per_page page] :or {per_page 10 page 1}}]
   ; might need a join to get a user name here bro
@@ -43,7 +43,7 @@
 
 (defn insert-photo [name filename description userid]
   (sql/with-connection db
-    (sql/insert-record 
+    (sql/insert-record
       :photos
       {:name name :filename filename :description description :userid userid})))
 
