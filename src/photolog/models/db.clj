@@ -8,6 +8,20 @@
          :user "developer"
          :password "a" })
 
+(defn create-table-albums []
+  (sql/with-connection db
+    (sql/create-table
+      :albums
+      [:id "SERIAL PRIMARY KEY"]
+      [:created_at "TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP"]
+      [:updated_at "TIMESTAMPTZ DEFAULT NULL"]
+      [:name "VARCHAR(128) DEFAULT 'Untitled'"]
+      [:description "VARCHAR(512) DEFAULT NULL"]
+      [:user_id "INTEGER REFERENCES users (id) ON UPDATE CASCADE ON DELETE SET NULL"])
+    (sql/do-commands "CREATE INDEX idx_albums_create_at ON albums (created_at)"
+                     "CREATE INDEX idx_albums_name ON albums (name)")))
+      
+
 (defn create-table-photos []
   (sql/with-connection db
     (sql/create-table
@@ -18,9 +32,9 @@
       [:name "VARCHAR(32) DEFAULT 'Untitled'"]
       [:filename "VARCHAR(255)"]
       [:description "TEXT DEFAULT NULL"]
-      [:user_id "INTEGER REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE NOT NULL"])
+      [:album_id "INTEGER REFERENCES users (id) on UPDATE CASCADE ON DELETE CASCADE NOT NULL"])
     (sql/do-commands "CREATE INDEX idx_photos_created_at ON photos (created_at)"
-                     "CREATE INDEX idx_photos_user_id ON photos (user_id)"
+                     "CREATE INDEX idx_photos_album_id ON photos (album_id)"
                      "CREATE INDEX idx_photos_name ON photos (name)")))
 
 (defn create-table-users []
@@ -34,12 +48,21 @@
       [:updated_at "TIMESTAMPTZ DEFAULT NULL"])
     (sql/do-commands "CREATE INDEX idx_users_username ON users (username)")))
 
+(defn get-albums [& {:keys [per_page page] :or {per_page 25 page 1}}]
+  (let [per_page (if (nil? per_page) 10 per_page) page (if (nil? page) 1 page)]
+    (sql/with-connection db
+      (sql/with-query-results
+        res ["SELECT * FROM albums ORDER BY created_at DESC LIMIT ? OFFSET ?" per_page (- page 1)]
+        (doall res)))))
+
 (defn get-photos [& {:keys [per_page page] :or {per_page 10 page 1}}]
-  ; might need a join to get a user name here bro
-  (sql/with-connection db
-    (sql/with-query-results
-      res ["SELECT * FROM photos ORDER BY created_at DESC LIMIT ? OFFSET ?" per_page (- page 1)]
-      (doall res))))
+  (let [per_page (if (nil? per_page) 10 per_page) page (if (nil? page) 1 page)]
+    ; might need a join to get a user name here bro
+    (sql/with-connection db
+      (sql/with-query-results
+        res ["SELECT * FROM photos ORDER BY created_at DESC LIMIT ? OFFSET ?" per_page (- page 1)]
+        (doall res)))))
+
 
 (defn insert-photo [name filename description userid]
   (sql/with-connection db

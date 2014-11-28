@@ -7,6 +7,8 @@
             [ring.middleware.anti-forgery :refer [wrap-anti-forgery]]
             [noir.util.middleware :as noir-mid]
             [compojure.route :as route]
+            [ring.middleware.multipart-params :refer [wrap-multipart-params]]
+            [photolog.routes.admin :refer [admin-routes]]
             [photolog.routes.home :refer [home-routes]]
             [photolog.routes.auth :refer [auth-routes]]))
 
@@ -28,5 +30,5 @@
       ;(wrap-base-url)
       ;(wrap-session)))
 
-(def app (noir-mid/app-handler [home-routes auth-routes app-routes]
-                                :middleware [wrap-anti-forgery]))
+(def app (noir-mid/app-handler [home-routes auth-routes admin-routes app-routes]
+                                :middleware [wrap-anti-forgery wrap-multipart-params]))
