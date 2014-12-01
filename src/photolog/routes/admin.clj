@@ -8,6 +8,7 @@
            [photolog.utils :refer [thumb-prefix albums]]
            [photolog.models.db :as db]
            [photolog.views.layout :as layout]
+           [clojure.string :as st]
            [clojure.java.io :as io])
   (:import [java.io File FileInputStream FileOutputStream]
            [java.awt.image AffineTransformOp BufferedImage]
@@ -44,6 +45,9 @@
         "jpeg"
         (File. (str path thumb-prefix filename))))))
 
+(defn slugidize [string]
+  (st/replace (st/lower-case string) #"[^a-z0-9-]+" "-"))
+
 (defn admin-index [r]
   (layout/admin
     [:ul.albums
@@ -72,7 +76,7 @@
   (try
     (let [new_album (db/insert-album form (session/get :user))]
       (doseq [photo photos]
-        ;upload file
+        (upload-file (str albums File/separator (slugidize (get form :name))) photo :create-path? true)
         (db/insert-photo-into-album photo (get new_album :id))))
         ;thumbnail
     (catch Exception ex
