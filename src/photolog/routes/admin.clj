@@ -6,7 +6,7 @@
            [noir.session :as session]
            [ring.util.anti-forgery :refer [anti-forgery-field]]
            [photolog.utils :refer [thumb-prefix albums]]
-           [photolog.models.db :refer [get-albums]]
+           [photolog.models.db :as db]
            [photolog.views.layout :as layout]
            [clojure.java.io :as io])
   (:import [java.io File FileInputStream FileOutputStream]
@@ -47,7 +47,7 @@
 (defn admin-index [r]
   (layout/admin
     [:ul.albums
-     (for [{:keys [created_at updated_at name description id]} (get-albums :page (:page r))]
+     (for [{:keys [created_at updated_at name description id]} (db/get-albums :page (:page r) :per_page 30)]
        [:li
         (link-to (str "/admin/" id) name)
         [:div.name name]
@@ -56,28 +56,27 @@
 
 (defn admin-new-album []
   (layout/admin
+    ; extract into own fn fo reuse
     (form-to {:enctype "multipart/form-data"}
              [:post "/admin/new-album"]
              (anti-forgery-field)
              (label "name" "name")
              (text-field "name")
              (label "desc" "description")
-             (text-area "desc")
+             (text-area "description")
              (label "photos" "photos")
              (file-upload {:multiple "multiple"} "photos")
              (submit-button "Create album"))))
 
 (defn  admin-new-album-post [form photos]
   (try
-    (doseq [photo photos]
-      (prn (get photo :filename))
-      (prn albums)
-      (noir.io/upload-file albums photo :create-path? true))
+    (let [new_album (db/insert-album form (session/get :user))]
+      (doseq [photo photos]
+        ;upload file
+        (db/insert-photo-into-album photo (get new_album :id))))
+        ;thumbnail
     (catch Exception ex
       (str "Error uploading file: " (.getMessage ex)))))
-      ;thumbnail
-      ;add to db
-    ;
 
 
 (defn admin-show-album [id]

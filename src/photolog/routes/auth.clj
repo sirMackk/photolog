@@ -34,5 +34,5 @@
 
 (defroutes auth-routes
   (GET "/gory" [] (login-page))
-  (POST "/gory" [username password] (handle-login username password))
+  (POST "/gory" [user pass] (handle-login user pass))
   (GET "/zmyk" [] (handle-logout)))

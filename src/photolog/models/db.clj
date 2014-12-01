@@ -32,7 +32,7 @@
       [:name "VARCHAR(32) DEFAULT 'Untitled'"]
       [:filename "VARCHAR(255)"]
       [:description "TEXT DEFAULT NULL"]
-      [:album_id "INTEGER REFERENCES users (id) on UPDATE CASCADE ON DELETE CASCADE NOT NULL"])
+      [:album_id "INTEGER REFERENCES albums (id) on UPDATE CASCADE ON DELETE CASCADE NOT NULL"])
     (sql/do-commands "CREATE INDEX idx_photos_created_at ON photos (created_at)"
                      "CREATE INDEX idx_photos_album_id ON photos (album_id)"
                      "CREATE INDEX idx_photos_name ON photos (name)")))
@@ -48,7 +48,7 @@
       [:updated_at "TIMESTAMPTZ DEFAULT NULL"])
     (sql/do-commands "CREATE INDEX idx_users_username ON users (username)")))
 
-(defn get-albums [& {:keys [per_page page] :or {per_page 25 page 1}}]
+(defn get-albums [& {:keys [per_page page] :or {per_page 10 page 1}}]
   (let [per_page (if (nil? per_page) 10 per_page) page (if (nil? page) 1 page)]
     (sql/with-connection db
       (sql/with-query-results
@@ -62,6 +62,20 @@
       (sql/with-query-results
         res ["SELECT * FROM photos ORDER BY created_at DESC LIMIT ? OFFSET ?" per_page (- page 1)]
         (doall res)))))
+
+
+(defn insert-album [{:keys [name description]} {:keys [id]}]
+  (sql/with-connection db
+    (sql/insert-record
+      :albums
+      {:name name :description description :user_id id})))
+
+(defn insert-photo-into-album [{:keys [name description filename]} albumid]
+  (prn (str "albumid: " albumid))
+  (sql/with-connection db
+    (sql/insert-record
+      :photos
+      {:name name :description description :filename filename :album_id albumid})))
 
 
 (defn insert-photo [name filename description userid]
