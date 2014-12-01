@@ -4,6 +4,7 @@
            [hiccup.element :refer [image link-to]]
            [noir.io :refer [upload-file resource-path]]
            [noir.session :as session]
+           [noir.response :as resp]
            [ring.util.anti-forgery :refer [anti-forgery-field]]
            [photolog.utils :refer [thumb-prefix albums]]
            [photolog.models.db :as db]
@@ -55,7 +56,6 @@
      (for [{:keys [created_at updated_at name description id]} (db/get-albums :page (:page r) :per_page 30)]
        [:li
         (link-to (str "/admin/" id) name)
-        [:div.name name]
         [:div.stamps (str created_at " / " updated_at)]
         [:div.desc description]])]))
 
@@ -81,10 +81,14 @@
         (db/insert-photo-into-album photo (get new_album :id))
         (save-thumbnail photo (get form :name))))
     (catch Exception ex
-      (str "Error uploading file: " (.getMessage ex)))))
+      (str "Error uploading file: " (.getMessage ex))))
+  (resp/redirect "/admin"))
 
 
 (defn admin-show-album [id]
+  (
+
+  ;(
   ; retrieve and render album
   )
 

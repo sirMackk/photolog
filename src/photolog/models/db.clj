@@ -84,6 +84,12 @@
       :photos
       {:name name :filename filename :description description :userid userid})))
 
+(defn get-album [album-id]
+  ;TODO this returns a row for every child record
+  (sql/with-connection db
+    (sql/with-query-results
+      res ["SELECT * FROM albums LEFT OUTER JOIN photos ON albums.id = photos.album_id WHERE albums.id = ?" album-id] (doall res))))
+
 (defn get-user [username]
   (sql/with-connection db
     (sql/with-query-results
