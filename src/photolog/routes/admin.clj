@@ -6,6 +6,7 @@
            [noir.session :as session]
            [noir.response :as resp]
            [ring.util.anti-forgery :refer [anti-forgery-field]]
+           [ring.util.response :refer [file-response]]
            [photolog.utils :refer [thumb-prefix albums]]
            [photolog.models.db :as db]
            [photolog.views.layout :as layout]
@@ -86,11 +87,22 @@
 
 
 (defn admin-show-album [id]
-  (
+  (let [album (db/get-album id)]
+    (if album
+      (layout/admin
+        [:h1 (str (:name (first album)))]
+        [:p (str (:description (first album)))]
+        (for [photo album]
+          (do 
+            [:h3 (str (:name_2 photo))]
+            [:p (str (:created_at_2 photo))]
+            [:p (str (:description_2 photo) " album name: " (:filename photo))]
+            (image (str "/" albums File/separator (slugidize (:name photo)) File/separator (:filename photo)))))) ; pull out into own function?
+      (do (session/flash-put! :error "No such album!") (resp/redirect "/admin")))))
 
-  ;(
-  ; retrieve and render album
-  )
+(defn serve-photo [album-name photo-filename]
+  (file-response (str albums File/separator album-name File/separator thumb-prefix photo-filename)))
+
 
 (defn admin-edit-album [id]
   ; retreive album and reuse create form to allow for rendering of album
@@ -111,4 +123,5 @@
   (GET "/admin/:album-id" [album-id] (admin-show-album album-id))
   (GET "/admin/:album-id/edit" [album-id] (admin-edit-album album-id))
   (DELETE "/admin/:album-id/delete/" [ids] (admin-delete-images ids))
-  (DELETE "/admin/" [ids] (admin-delete-album ids)))
+  (DELETE "/admin/" [ids] (admin-delete-album ids))
+  (GET "/albums/:album-name/:photo-filename" [album-name photo-filename] (serve-photo album-name photo-filename)))
