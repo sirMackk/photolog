@@ -60,21 +60,23 @@
         [:div.stamps (str created_at " / " updated_at)]
         [:div.desc description]])]))
 
+(defn album-form [url & [val-map]]
+  (form-to {:enctype "multipart/form-data"}
+           [:post url] 
+           (anti-forgery-field)
+           (label "name" "name")
+           (text-field "name" (:name val-map))
+           (label "desc" "description")
+           (text-area "description" (:description val-map))
+           (label "photos" "photos")
+           (file-upload {:multiple "multiple"} "photos")
+           (submit-button "Submit")))
+
 (defn admin-new-album []
   (layout/admin
-    ; extract into own fn fo reuse
-    (form-to {:enctype "multipart/form-data"}
-             [:post "/admin/new-album"]
-             (anti-forgery-field)
-             (label "name" "name")
-             (text-field "name")
-             (label "desc" "description")
-             (text-area "description")
-             (label "photos" "photos")
-             (file-upload {:multiple "multiple"} "photos")
-             (submit-button "Create album"))))
+    (album-form "/admin-new-album")))
 
-(defn  admin-new-album-post [form photos]
+(defn admin-new-album-post [form photos]
   (try
     (let [new_album (db/insert-album form (session/get :user))]
       (doseq [photo photos]
@@ -87,7 +89,7 @@
 
 
 (defn admin-show-album [id]
-  (let [album (db/get-album id)]
+  (let [album (db/get-album-with-photos id)]
     (if album
       (layout/admin
         [:h1 (str (:name (first album)))]
@@ -105,11 +107,34 @@
 
 
 (defn admin-edit-album [id]
-  ; retreive album and reuse create form to allow for rendering of album
-  )
+  (let [album (db/get-album-with-photos id)]
+    (if album
+      (layout/admin
+        (album-form (str "/admin/" (:id album) "/edit") (first album))
+        [:hr]
+        (for [photo album]
+          (do 
+            (prn photo)
+            [:div.photo
+             (check-box (:id_2 photo))
+            (image (str "/" albums File/separator (slugidize (:name photo)) File/separator (:filename photo)))])))
+      (do (session/flash-put! :error "No such album!") (resp/redirect "/admin")))))
+
+(defn admin-edit-album-post [form multip]
+  (let [album (db/update-album form (session/get :user))]
+    (try
+      (if-not (empty? multip)
+        ; this can be pulled out and shared with new-album
+        (doseq [photo multip]
+          (upload-file (str albums File/separator (slugidize (get form :name))) photo :create-path? true)
+          (db/insert-photo-into-album photo (get album :id))
+          (save-thumbnail photo (get form :name))))
+      (catch Exception ex
+        (str "Error updating album: " (.getMessage ex))))))
 
 (defn admin-delete-album [ids]
   ; delete an album along with all child images
+  ; show js confirmation dialog
   )
 
 (defn admin-delete-images [ids]
@@ -122,6 +147,7 @@
   (POST "/admin/new-album" {form :params {multip "photos"} :multipart-params} (admin-new-album-post form multip)) 
   (GET "/admin/:album-id" [album-id] (admin-show-album album-id))
   (GET "/admin/:album-id/edit" [album-id] (admin-edit-album album-id))
-  (DELETE "/admin/:album-id/delete/" [ids] (admin-delete-images ids))
+  (POST "/admin/edit" {form :params {multip "photos"} :multipart-params} (admin-edit-album-post form multip))
+  (DELETE "/admin/:album-id/delete" [ids] (admin-delete-images ids))
   (DELETE "/admin/" [ids] (admin-delete-album ids))
   (GET "/albums/:album-name/:photo-filename" [album-name photo-filename] (serve-photo album-name photo-filename)))

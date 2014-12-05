@@ -1,6 +1,9 @@
 (ns photolog.models.db
   (:require [clojure.java.jdbc.deprecated :as sql]
             [noir.util.crypt :as crypt]))
+;TODO's:
+; use macro for with-connection db
+; update to not use deprecated 
 
 
 (def db {:subprotocol "postgresql"
@@ -78,13 +81,23 @@
       {:name name :description description :filename filename :album_id albumid})))
 
 
+; mite b unused
 (defn insert-photo [name filename description userid]
   (sql/with-connection db
     (sql/insert-record
       :photos
       {:name name :filename filename :description description :userid userid})))
 
+(defn update-album [{:keys [name description id]} {:keys [user_id]}]
+  (sql/with-connection db
+    (sql/update-values :albums ["id = ?" id] {:name name :description description :userid user_id})))
+
 (defn get-album [album-id]
+  (sql/with-connection db
+    (sql/with-query-results
+      res ["SELECT * FROM albums where id = ?" (Integer. album-id)] (first res))))
+
+(defn get-album-with-photos [album-id]
   (sql/with-connection db
     (sql/with-query-results
       res ["SELECT * FROM albums LEFT OUTER JOIN photos ON albums.id = photos.album_id WHERE albums.id = ?" (Integer. album-id)] (doall res))))
