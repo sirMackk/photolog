@@ -24,6 +24,9 @@
 (defn slugidize [string]
   (st/replace (st/trim (st/lower-case string)) #"[^a-z0-9-]+" "-"))
 
+(defn gen-name [{:keys [filename]} upload]
+  (str (System/currentTimeMillis)))
+
 (defn scale [img ratio width height]
   "Creates an AffineTransform Scale object using the ration, then, feeds that
   to the AffineTransfromOp constructor. Finally, the filter method of transform-op
@@ -53,12 +56,19 @@
 
 (defn admin-index [r]
   (layout/admin
-    [:ul.albums
-     (for [{:keys [created_at updated_at name description id]} (db/get-albums :page (:page r) :per_page 30)]
-       [:li
-        (link-to (str "/admin/" id) name)
-        [:div.stamps (str created_at " / " updated_at)]
-        [:div.desc description]])]))
+    (form-to [:post "/admin/delete-albums"]
+      (submit-button "Delete selected albums")
+      (anti-forgery-field)
+      [:ul.albums
+       (for [{:keys [created_at updated_at name description id]} (db/get-albums :page (:page r) :per_page 30)]
+         [:li
+          (link-to (str "/admin/" id) name)
+          [:br]
+          (link-to (str "/admin/" id "/edit") "edit")
+          [:div.stamps (str created_at " / " updated_at)]
+          [:div.desc description]
+          (label (str "del_" id) "Delete?")
+          (check-box (str "albums[" id "]"))])])))
 
 (defn album-form [url & [val-map]]
   (form-to {:enctype "multipart/form-data"}
@@ -70,11 +80,13 @@
            (text-area "description" (:description val-map))
            (label "photos" "photos")
            (file-upload {:multiple "multiple"} "photos")
+           (if (contains? val-map :id)
+             (hidden-field "id" (:id val-map)))
            (submit-button "Submit")))
 
 (defn admin-new-album []
   (layout/admin
-    (album-form "/admin-new-album")))
+    (album-form "/admin/new-album")))
 
 (defn admin-new-album-post [form photos]
   (try
@@ -105,41 +117,59 @@
 (defn serve-photo [album-name photo-filename]
   (file-response (str albums File/separator album-name File/separator thumb-prefix photo-filename)))
 
+(defn format-files [multipart]
+  "Pushes a map into a vector if only a single file is uploaded."
+  (if-not (vector? multipart)
+    [multipart]
+    multipart))
 
 (defn admin-edit-album [id]
+  ; use if-let here
   (let [album (db/get-album-with-photos id)]
     (if album
       (layout/admin
-        (album-form (str "/admin/" (:id album) "/edit") (first album))
+        (album-form (str "/admin/edit") (first album))
         [:hr]
-        (for [photo album]
-          (do 
-            (prn photo)
-            [:div.photo
-             (check-box (:id_2 photo))
-            (image (str "/" albums File/separator (slugidize (:name photo)) File/separator (:filename photo)))])))
-      (do (session/flash-put! :error "No such album!") (resp/redirect "/admin")))))
+        (form-to [:post "/admin/delete-photos"]
+          (anti-forgery-field)
+          (hidden-field "album_id" id)
+          (for [photo album]
+            (do 
+              [:div.photo
+                (label (str "photos_del_[" id "]") "Delete?")
+                (check-box (str "photos_del[" (:id_2 photo) "]"))
+                (image (str "/" albums File/separator (slugidize (:name photo)) File/separator (:filename photo)))]))
+          (submit-button "Delete selected photos")))
+        (do (session/flash-put! :error "No such album!!") (resp/redirect "/admin")))))
 
 (defn admin-edit-album-post [form multip]
-  (let [album (db/update-album form (session/get :user))]
+  ; problem with redirecting to correct album
+  (let [_ (db/update-album form (session/get :user)) album (db/get-album (:id form)) files (format-files multip)]
     (try
-      (if-not (empty? multip)
+      (if-not (= (:size multip) 0)
         ; this can be pulled out and shared with new-album
-        (doseq [photo multip]
+        (doseq [photo files]
           (upload-file (str albums File/separator (slugidize (get form :name))) photo :create-path? true)
           (db/insert-photo-into-album photo (get album :id))
-          (save-thumbnail photo (get form :name))))
+          (save-thumbnail photo (get form :name))
+          ))
+        (do (session/flash-put! :notice "Album updated") (resp/redirect (str "/admin/" (get album :id) "/edit")))
       (catch Exception ex
-        (str "Error updating album: " (.getMessage ex))))))
+        (str "Error updating album: " ex (.getMessage ex))))))
 
-(defn admin-delete-album [ids]
-  ; delete an album along with all child images
-  ; show js confirmation dialog
-  )
+; these two function can easily be merged into one, cmon
+(defn admin-delete-album [form]
+  (let [ids (map #(Integer. %) (keys (:albums form)))]
+    (db/delete-albums ids)
+    (do (session/flash-put! :notice "Album deleted") (resp/redirect"/admin"))))
 
-(defn admin-delete-images [ids]
-  ; delete images
-  )
+(defn admin-delete-photos [form]
+  (let [ids (map #(Integer. %) (keys (:photos_del form)))]
+    (db/delete-photos ids)
+    (do 
+      (session/flash-put! :notice "Photos deleted") 
+      (resp/redirect
+        (str "/admin/" (:album_id form) "/edit")))))
 
 (defroutes admin-routes
   (GET "/admin" {pars :params} (admin-index pars))
@@ -148,6 +178,6 @@
   (GET "/admin/:album-id" [album-id] (admin-show-album album-id))
   (GET "/admin/:album-id/edit" [album-id] (admin-edit-album album-id))
   (POST "/admin/edit" {form :params {multip "photos"} :multipart-params} (admin-edit-album-post form multip))
-  (DELETE "/admin/:album-id/delete" [ids] (admin-delete-images ids))
-  (DELETE "/admin/" [ids] (admin-delete-album ids))
+  (POST "/admin/delete-albums" {form :params} (admin-delete-album form))
+  (POST "/admin/delete-photos" {form :params} (admin-delete-photos form))
   (GET "/albums/:album-name/:photo-filename" [album-name photo-filename] (serve-photo album-name photo-filename)))

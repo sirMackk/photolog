@@ -74,7 +74,6 @@
       {:name name :description description :user_id id})))
 
 (defn insert-photo-into-album [{:keys [name description filename]} albumid]
-  (prn (str "albumid: " albumid))
   (sql/with-connection db
     (sql/insert-record
       :photos
@@ -88,9 +87,15 @@
       :photos
       {:name name :filename filename :description description :userid userid})))
 
-(defn update-album [{:keys [name description id]} {:keys [user_id]}]
+; move to utils?
+(defn current-time []
+  (java.sql.Timestamp. (.getTime (java.util.Date.))))
+
+(defn update-album [{:keys [name description id]} {user_id :id}]
   (sql/with-connection db
-    (sql/update-values :albums ["id = ?" id] {:name name :description description :userid user_id})))
+    (let [now (current-time)]
+      (sql/update-values :albums ["id = ?" (Integer. id)] {:name name :description description :user_id (Integer. user_id) :updated_at now}))))
+    
 
 (defn get-album [album-id]
   (sql/with-connection db
@@ -101,6 +106,16 @@
   (sql/with-connection db
     (sql/with-query-results
       res ["SELECT * FROM albums LEFT OUTER JOIN photos ON albums.id = photos.album_id WHERE albums.id = ?" (Integer. album-id)] (doall res))))
+
+; extract IN-clause logic into own fn
+(defn delete-albums [ids]
+  (sql/with-connection db
+    (sql/delete-rows :albums (flatten [(str "id IN (" (clojure.string/join ", " (take (count ids) (repeat "?"))) ")") ids]))))
+
+(defn delete-photos [ids]
+  (prn ids)
+  (sql/with-connection db
+    (sql/delete-rows :photos (flatten [(str "id IN (" (clojure.string/join ", " (take (count ids) (repeat "?"))) ")") ids]))))
 
 (defn get-user [username]
   (sql/with-connection db

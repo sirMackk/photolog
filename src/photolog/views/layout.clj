@@ -1,5 +1,5 @@
 (ns photolog.views.layout
-  (:require [hiccup.page :refer [html5 include-css]]
+  (:require [hiccup.page :refer [html5 include-css include-js]]
             [noir.session :as session]))
 
 (defmacro render-flash [ses-key string]
@@ -10,7 +10,10 @@
   (html5
     [:head
      [:title "Welcome to photolog"]
-     (include-css "/css/screen.css")]
+     (include-css "/css/screen.css")
+     (include-js "/js/jquery.min.js")]
+
+
     [:body
      (render-flash :notice "Notifications: ")
      (render-flash :error "Errors: ")
