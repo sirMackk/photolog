@@ -24,7 +24,7 @@
 (defn slugidize [string]
   (st/replace (st/trim (st/lower-case string)) #"[^a-z0-9-]+" "-"))
 
-(defn gen-name [{:keys [filename]} upload]
+(defn epoch-time []
   (str (System/currentTimeMillis)))
 
 (defn scale [img ratio width height]
@@ -53,6 +53,20 @@
         (scale-image output_image)
         "jpeg"
         (File. (str path thumb-prefix filename))))))
+
+; this would do with extraction
+(defn serve-photo [album-name photo-filename]
+  (file-response (str albums File/separator album-name File/separator thumb-prefix photo-filename)))
+
+(defn format-files [multipart]
+  "Pushes a map into a vector if only a single file is uploaded."
+  (if-not (vector? multipart)
+    [multipart]
+    multipart))
+
+(defn prozess-file [file]
+  (let [stamp (epoch-time)]
+    (assoc file :filename (str (epoch-time) "_" (:filename file)))))
 
 (defn admin-index [r]
   (layout/admin
@@ -88,13 +102,15 @@
   (layout/admin
     (album-form "/admin/new-album")))
 
-(defn admin-new-album-post [form photos]
+(defn admin-new-album-post [form files]
   (try
-    (let [new_album (db/insert-album form (session/get :user))]
-      (doseq [photo photos]
-        (upload-file (str albums File/separator (slugidize (get form :name))) photo :create-path? true)
-        (db/insert-photo-into-album photo (get new_album :id))
-        (save-thumbnail photo (get form :name))))
+    (let [new_album (db/insert-album form (session/get :user)) files (format-files files)]
+      (doseq [photo files]
+        ; combine let and dosec?
+        (let [file (prozess-file photo)]
+          (upload-file (str albums File/separator (slugidize (get form :name))) file :create-path? true)
+          (db/insert-photo-into-album file (get new_album :id))
+          (save-thumbnail file (get form :name)))))
     (catch Exception ex
       (str "Error uploading file: " (.getMessage ex))))
   (resp/redirect "/admin"))
@@ -114,14 +130,6 @@
             (image (str "/" albums File/separator (slugidize (:name photo)) File/separator (:filename photo)))))) ; pull out into own function?
       (do (session/flash-put! :error "No such album!") (resp/redirect "/admin")))))
 
-(defn serve-photo [album-name photo-filename]
-  (file-response (str albums File/separator album-name File/separator thumb-prefix photo-filename)))
-
-(defn format-files [multipart]
-  "Pushes a map into a vector if only a single file is uploaded."
-  (if-not (vector? multipart)
-    [multipart]
-    multipart))
 
 (defn admin-edit-album [id]
   ; use if-let here
@@ -143,16 +151,16 @@
         (do (session/flash-put! :error "No such album!!") (resp/redirect "/admin")))))
 
 (defn admin-edit-album-post [form multip]
-  ; problem with redirecting to correct album
   (let [_ (db/update-album form (session/get :user)) album (db/get-album (:id form)) files (format-files multip)]
     (try
       (if-not (= (:size multip) 0)
         ; this can be pulled out and shared with new-album
         (doseq [photo files]
-          (upload-file (str albums File/separator (slugidize (get form :name))) photo :create-path? true)
-          (db/insert-photo-into-album photo (get album :id))
-          (save-thumbnail photo (get form :name))
-          ))
+          (let [file (prozess-file photo)]
+            (upload-file (str albums File/separator (slugidize (get form :name))) file :create-path? true)
+            (db/insert-photo-into-album file (get album :id))
+            (save-thumbnail file (get form :name))
+            )))
         (do (session/flash-put! :notice "Album updated") (resp/redirect (str "/admin/" (get album :id) "/edit")))
       (catch Exception ex
         (str "Error updating album: " ex (.getMessage ex))))))

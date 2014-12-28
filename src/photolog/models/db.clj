@@ -113,7 +113,6 @@
     (sql/delete-rows :albums (flatten [(str "id IN (" (clojure.string/join ", " (take (count ids) (repeat "?"))) ")") ids]))))
 
 (defn delete-photos [ids]
-  (prn ids)
   (sql/with-connection db
     (sql/delete-rows :photos (flatten [(str "id IN (" (clojure.string/join ", " (take (count ids) (repeat "?"))) ")") ids]))))
 
