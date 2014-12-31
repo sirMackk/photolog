@@ -5,12 +5,14 @@
                  [compojure "1.1.6"]
                  [hiccup "1.0.5"]
                  [lib-noir "0.9.4"]
+                 [environ "0.4.0"]
                  [postgresql/postgresql "9.1-901.jdbc4"]
                  ;[markdown-clj "0.9.58"]
+                 [peridot "0.3.1"]
                  [ring/ring-anti-forgery "1.0.0"]
                  [org.clojure/java.jdbc "0.3.6"]
                  [ring-server "0.3.1"]]
-  :plugins [[lein-ring "0.8.12"]]
+  :plugins [[lein-ring "0.8.12"] [lein-environ "0.4.0"]]
   :ring {:handler photolog.handler/app
          :init photolog.handler/init
          :destroy photolog.handler/destroy}
@@ -20,4 +22,10 @@
    {:ring
     {:open-browser? false, :stacktraces? false, :auto-reload? false}}
    :dev
-   {:dependencies [[ring-mock "0.1.5"] [ring/ring-devel "1.3.1"]]}})
+   {:dependencies [[ring-mock "0.1.5"] [ring/ring-devel "1.3.1"]]
+    :env {:proto "postgresql" :subname "//localhost/photolog_dev"
+          :db-user "developer" :password "a"}}
+   :test
+   {:env {:proto "postgresql" :subname "//localhost/photolog_test"
+          :db-user "developer" :password "a"}}
+   })

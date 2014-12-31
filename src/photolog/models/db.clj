@@ -1,15 +1,22 @@
 (ns photolog.models.db
   (:require [clojure.java.jdbc.deprecated :as sql]
-            [noir.util.crypt :as crypt]))
+            [noir.util.crypt :as crypt]
+            [environ.core :refer [env]]))
 ;TODO's:
 ; use macro for with-connection db
 ; update to not use deprecated 
 
 
-(def db {:subprotocol "postgresql"
-         :subname "//localhost/photolog_dev"
-         :user "developer"
-         :password "a" })
+(def db {:subprotocol (env :proto) 
+         :subname (env :subname)
+         :user (env :db-user)
+         :password (env :password) })
+
+(defn drop-tables []
+  (sql/with-connection db
+    (doseq [tbl ["photos" "albums" "users"]]
+      (sql/do-commands
+        (str "DROP TABLE IF EXISTS " tbl)))))
 
 (defn create-table-albums []
   (sql/with-connection db
@@ -52,18 +59,18 @@
     (sql/do-commands "CREATE INDEX idx_users_username ON users (username)")))
 
 (defn get-albums [& {:keys [per_page page] :or {per_page 10 page 1}}]
-  (let [per_page (if (nil? per_page) 10 per_page) page (if (nil? page) 1 page)]
+  (let [per_page (if (nil? per_page) 10 (Integer. per_page)) page (if (nil? page) 1 (Integer. page))]
     (sql/with-connection db
       (sql/with-query-results
-        res ["SELECT * FROM albums ORDER BY created_at DESC LIMIT ? OFFSET ?" per_page (- page 1)]
+        res ["SELECT * FROM albums ORDER BY created_at DESC LIMIT ? OFFSET ?" per_page (* per_page (- page 1))]
         (doall res)))))
 
 (defn get-photos [& {:keys [per_page page] :or {per_page 10 page 1}}]
-  (let [per_page (if (nil? per_page) 10 per_page) page (if (nil? page) 1 page)]
+  (let [per_page (if (nil? per_page) 10 (Integer. per_page)) page (if (nil? page) 1 (Integer. page))]
     ; might need a join to get a user name here bro
     (sql/with-connection db
       (sql/with-query-results
-        res ["SELECT * FROM photos ORDER BY created_at DESC LIMIT ? OFFSET ?" per_page (- page 1)]
+        res ["SELECT * FROM photos ORDER BY created_at DESC LIMIT ? OFFSET ?" per_page (* per_page (- page 1))]
         (doall res)))))
 
 
@@ -109,6 +116,7 @@
 
 ; extract IN-clause logic into own fn
 (defn delete-albums [ids]
+  (prn ids)
   (sql/with-connection db
     (sql/delete-rows :albums (flatten [(str "id IN (" (clojure.string/join ", " (take (count ids) (repeat "?"))) ")") ids]))))
 
@@ -126,3 +134,6 @@
   (sql/with-connection db
     (sql/insert-record
       :users {:username username :password (crypt/encrypt password)})))
+
+(defn create-test-user []
+  (insert-user "matt" "123123"))

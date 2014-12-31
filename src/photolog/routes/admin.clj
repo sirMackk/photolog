@@ -60,6 +60,8 @@
 
 (defn format-files [multipart]
   "Pushes a map into a vector if only a single file is uploaded."
+  (if (nil? multipart)
+    nil)
   (if-not (vector? multipart)
     [multipart]
     multipart))
@@ -153,7 +155,7 @@
 (defn admin-edit-album-post [form multip]
   (let [_ (db/update-album form (session/get :user)) album (db/get-album (:id form)) files (format-files multip)]
     (try
-      (if-not (= (:size multip) 0)
+      (if-not (nil? multip) ; check for size in multip?
         ; this can be pulled out and shared with new-album
         (doseq [photo files]
           (let [file (prozess-file photo)]
@@ -163,7 +165,7 @@
             )))
         (do (session/flash-put! :notice "Album updated") (resp/redirect (str "/admin/" (get album :id) "/edit")))
       (catch Exception ex
-        (str "Error updating album: " ex (.getMessage ex))))))
+        (str "Error updating album: " ex (.printStackTrace ex))))))
 
 ; these two function can easily be merged into one, cmon
 (defn admin-delete-album [form]
