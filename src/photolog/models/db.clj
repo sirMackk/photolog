@@ -116,7 +116,6 @@
 
 ; extract IN-clause logic into own fn
 (defn delete-albums [ids]
-  (prn ids)
   (sql/with-connection db
     (sql/delete-rows :albums (flatten [(str "id IN (" (clojure.string/join ", " (take (count ids) (repeat "?"))) ")") ids]))))
 
