@@ -5,6 +5,7 @@
            [noir.io :refer [upload-file resource-path]]
            [noir.session :as session]
            [noir.response :as resp]
+           [noir.util.route :refer [def-restricted-routes]]
            [ring.util.anti-forgery :refer [anti-forgery-field]]
            [ring.util.response :refer [file-response]]
            [photolog.utils :refer [thumb-prefix albums]]
@@ -181,7 +182,7 @@
       (resp/redirect
         (str "/admin/" (:album_id form) "/edit")))))
 
-(defroutes admin-routes
+(def-restricted-routes admin-routes
   (GET "/admin" {pars :params} (admin-index pars))
   (GET "/admin/new-album" [] (admin-new-album))
   (POST "/admin/new-album" {form :params {multip "photos"} :multipart-params} (admin-new-album-post form multip)) 
