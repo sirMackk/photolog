@@ -2,6 +2,10 @@
 /lib
 /classes
 /checkouts
+/node_modules
+/albums
+/.sass-cache
+.todo
 pom.xml
 *.jar
 *.class

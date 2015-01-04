@@ -4,6 +4,8 @@
             [environ.core :refer [env]]))
 ;TODO's:
 ; use macro for with-connection db
+; - or switch to an ORM?
+; add status to album (public, draft)
 ; update to not use deprecated 
 
 
