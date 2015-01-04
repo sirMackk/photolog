@@ -4,15 +4,17 @@
             [environ.core :refer [env]]))
 ;TODO's:
 ; use macro for with-connection db
-; - or switch to an ORM?
-; add status to album (public, draft)
 ; update to not use deprecated 
+
 
 
 (def db {:subprotocol (env :proto) 
          :subname (env :subname)
          :user (env :db-user)
          :password (env :password) })
+
+(def album-status 
+  {:draft 0 :published 1})
 
 (defn drop-tables []
   (sql/with-connection db
@@ -29,6 +31,7 @@
       [:updated_at "TIMESTAMPTZ DEFAULT NULL"]
       [:name "VARCHAR(128) DEFAULT 'Untitled'"]
       [:description "VARCHAR(512) DEFAULT NULL"]
+      [:status "SMALLINT DEFAULT 0"]
       [:user_id "INTEGER REFERENCES users (id) ON UPDATE CASCADE ON DELETE SET NULL"])
     (sql/do-commands "CREATE INDEX idx_albums_create_at ON albums (created_at)"
                      "CREATE INDEX idx_albums_name ON albums (name)")))
@@ -60,11 +63,12 @@
       [:updated_at "TIMESTAMPTZ DEFAULT NULL"])
     (sql/do-commands "CREATE INDEX idx_users_username ON users (username)")))
 
-(defn get-albums [& {:keys [per_page page] :or {per_page 10 page 1}}]
+(defn get-albums [& {:keys [per_page page status] :or {per_page 10 page 1 status :published}}]
   (let [per_page (if (nil? per_page) 10 (Integer. per_page)) page (if (nil? page) 1 (Integer. page))]
     (sql/with-connection db
       (sql/with-query-results
-        res ["SELECT * FROM albums ORDER BY created_at DESC LIMIT ? OFFSET ?" per_page (* per_page (- page 1))]
+        res ["SELECT * FROM albums WHERE status = ? ORDER BY created_at DESC LIMIT ? OFFSET ?" 
+             (status album-status) per_page (* per_page (- page 1))]
         (doall res)))))
 
 (defn get-photos [& {:keys [per_page page] :or {per_page 10 page 1}}]
@@ -76,11 +80,12 @@
         (doall res)))))
 
 
-(defn insert-album [{:keys [name description]} {:keys [id]}]
+(defn insert-album [{:keys [name description status]} {:keys [id]}]
+  (let [stat (or status 0)]
   (sql/with-connection db
     (sql/insert-record
       :albums
-      {:name name :description description :user_id id})))
+      {:name name :description description :user_id id :status (Integer. stat)}))))
 
 (defn insert-photo-into-album [{:keys [name description filename]} albumid]
   (sql/with-connection db
@@ -100,10 +105,11 @@
 (defn current-time []
   (java.sql.Timestamp. (.getTime (java.util.Date.))))
 
-(defn update-album [{:keys [name description id]} {user_id :id}]
+(defn update-album [{:keys [name description id status]} {user_id :id}]
+  (let [stat (or status 0)]
   (sql/with-connection db
     (let [now (current-time)]
-      (sql/update-values :albums ["id = ?" (Integer. id)] {:name name :description description :user_id (Integer. user_id) :updated_at now}))))
+      (sql/update-values :albums ["id = ?" (Integer. id)] {:name name :description description :user_id (Integer. user_id) :updated_at now :status (Integer. stat)})))))
     
 
 (defn get-album [album-id]

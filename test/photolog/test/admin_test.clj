@@ -1,11 +1,12 @@
 (ns photolog.test.admin-test
   (:use clojure.test
-        ;ring.mock.request
         photolog.handler
         photolog.models.db
         peridot.core
         photolog.test.helpers)
   (:require [clojure.java.io :refer [file]]))
+;TODO Test photo deletion
+;TODO Test photo desc/title edit
 
 (defn clean-database [f]
   (drop-tables)
@@ -50,19 +51,9 @@
           (is (not (nil? (re-find #"album-test" body))))))
       (request "/admin/new-album" :request-method :post
                                   :params {:name "album-test"
-                                           :description "album test desc" })
+                                           :description "album test desc"
+                                           :status "1" })
       (follow-redirect))))
-
-(deftest test-admin-show-album
-  (testing "admin-show-album after creating album"
-    (with-user
-      (fn [rsp]
-        (let [body (get-in rsp [:response :body])]
-          (is (not (nil? (re-find #"album test desc" body))))))
-      (request "/admin/new-album" :request-method :post
-                                  :params {:name "album-test"
-                                           :description "album test desc"})
-      (request "/admin/1"))))
 
 (deftest test-admin-edit-album
   (testing "admin-edit-album after creating album"
@@ -94,9 +85,8 @@
   (testing "admin-delete-album"
     (with-user
       (fn [rsp]
-        ;(prn rsp)
         (let [body (get-in rsp [:response :body])]
-          (is (not (nil? (re-find #"Album deleted" body))))
+          (is (not (nil? (re-find #"Item\(s\) deleted" body))))
           (is (nil? (re-find #"album-test" body)))))
       (request "/admin/new-album" :request-method :post
                                   :params {:name "album-test"
@@ -115,8 +105,9 @@
         (request "/admin/new-album" :request-method :post
                                     :params {:name "album-test-photo"
                                              :description "album test desc" 
+                                             :status "1"
                                              :photos f})
-        (request "/admin/1")))))
+        (request "/admin/1/edit")))))
 
 (deftest update-album-with-photo
   (testing "adding photo to existing album"
@@ -133,5 +124,5 @@
                                         :description "New Desc"
                                         :id 1
                                         :photos f})
-        (request "/admin/1")))))
+        (request "/admin/1/edit")))))
 
