@@ -8,7 +8,8 @@ var gulp = require('gulp'),
 
 // sprites?
 var paths = {
-  styles: ['assets/sass/**/*.scss'],
+  applicationScss: ['assets/sass/application.scss'],
+  styles: ['assets/sass/app'],
   scripts: ['assets/js/**/*.js'],
 }
 
@@ -20,11 +21,11 @@ gulp.task('clean', function(cb) {
 });
 
 gulp.task('scss', ['clean'], function() {
-  return gulp.src(paths.styles)
+  return gulp.src(paths.applicationScss)
     .pipe(autoprefixer({
       cascade: false,
     }))
-    .pipe(sass({includePaths: ['./assets/sass/']}))
+    .pipe(sass({includePaths: ['./assets/sass/app/']}))
     .pipe(minifyCSS())
     .pipe(concat('app.min.css'))
     .pipe(gulp.dest('./resources/public/css/'));
