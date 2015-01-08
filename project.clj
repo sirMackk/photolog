@@ -8,6 +8,9 @@
                  [environ "0.4.0"]
                  [postgresql/postgresql "9.1-901.jdbc4"]
                  ;[markdown-clj "0.9.58"]
+                 [ring.middleware.logger "0.5.0"]
+                 [com.taoensso/timbre "3.3.1-1cd4b70"]
+                 [com.postspectacular/rotor "0.1.0"]
                  [peridot "0.3.1"]
                  [ring/ring-anti-forgery "1.0.0"]
                  [org.clojure/java.jdbc "0.3.6"]
@@ -24,8 +27,12 @@
    :dev
    {:dependencies [[ring-mock "0.1.5"] [ring/ring-devel "1.3.1"]]
     :env {:proto "postgresql" :subname "//localhost/photolog_dev"
-          :db-user "developer" :password "a"}}
+          :db-user "developer" :password "a" 
+          :log-path "logs/dev.log" :log-size 104857600
+          :log-backlog 5 :log-enabled true}}
    :test
    {:env {:proto "postgresql" :subname "//localhost/photolog_test"
-          :db-user "developer" :password "a"}}
+          :db-user "developer" :password "a"
+          :log-path "" :log-size 1
+          :log-backlog 0 :log-enabled false}}
    })

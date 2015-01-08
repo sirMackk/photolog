@@ -6,6 +6,12 @@
             [photolog.views.layout :as layout])
   (:import [java.io File]))
 
+(defn paginate [{:keys [current per total]}]
+  (let [pages (range 1 (inc (int (Math/ceil (/ total per)))))]
+    (for [page pages]
+      (do
+        (link-to (str "/admin?page=" page) page)))))
+        
 (defn album-form [url & [val-map]]
   [:div.album-form
     (form-to {:enctype "multipart/form-data"}
@@ -25,7 +31,7 @@
                (hidden-field "id" (:id val-map)))
              (submit-button "Submit"))])
 
-(defn admin-index [r album]
+(defn admin-index [r album pagination]
   (layout/admin
     [:h1 "Albums index"]
     (form-to [:post "/admin/delete-albums"]
@@ -50,7 +56,9 @@
             [:td.actions
              (link-to (str "/admin/" id "/edit") "Edit")
              (label (str "del_" id) "Delete?")
-             (check-box (str "albums[" id "]"))]])]])))
+             (check-box (str "albums[" id "]"))]])]])
+    (paginate pagination)
+    ))
 
 (defn admin-new-album []
   (layout/admin

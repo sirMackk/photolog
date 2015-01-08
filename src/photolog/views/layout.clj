@@ -11,7 +11,7 @@
   (html5
     [:head
      [:title "Welcome to photolog"]
-     (include-css "/css/app.min.js")
+     (include-css "/css/app.min.css")
      (include-js "/js/jquery.min.js")]
 
 

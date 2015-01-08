@@ -12,8 +12,10 @@
   (:import [java.io File]))
             
 (defn admin-index [req]
-  (let [album (db/get-albums :page (:page req) :per_page 30)]
-    (admin-views/admin-index req album)))
+  (let [albums (db/get-albums :page (:page req) :per_page 30)
+        pagination {:current (get req :page 1) :per 30 
+                    :total @db/album-count-admin}]
+    (admin-views/admin-index req albums pagination)))
 
 (defn admin-edit-album [id]
   (if-let [album (db/get-album-with-photos id)]

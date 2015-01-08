@@ -32,7 +32,7 @@ gulp.task('scss', ['clean'], function() {
 });
 
 gulp.task('watch', function() {
-  gulp.watch(paths.styles, ['scss']);
+  gulp.watch(paths.styles.concat(paths.applicationScss), ['scss']);
 });
 
 gulp.task('default', ['watch', 'scss']);

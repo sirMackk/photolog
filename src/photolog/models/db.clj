@@ -16,6 +16,19 @@
 (def album-status 
   {:draft 0 :published 1})
 
+(def album-count-admin
+  (atom (sql/with-connection db
+          (sql/with-query-results res
+            ["SELECT COUNT(id) FROM albums"]
+            (:count (first res))))))
+
+; refactor these two atoms out
+(def album-count-guest
+  (atom (sql/with-connection db
+          (sql/with-query-results res
+            ["SELECT COUNT(id) FROM albums WHERE status IN (0, 1)"]
+            (:count (first res))))))
+
 (defn drop-tables []
   (sql/with-connection db
     (doseq [tbl ["photos" "albums" "users"]]
@@ -64,7 +77,10 @@
     (sql/do-commands "CREATE INDEX idx_users_username ON users (username)")))
 
 (defn get-albums [& {:keys [per_page page status] :or {per_page 10 page 1 status :published}}]
-  (let [per_page (if (nil? per_page) 10 (Integer. per_page)) page (if (nil? page) 1 (Integer. page))]
+  (let [per_page 
+        (if (nil? per_page) 10 (Integer. per_page)) 
+        page 
+        (if (nil? page) 1 (Integer. page))]
     (sql/with-connection db
       (sql/with-query-results
         res ["SELECT * FROM albums WHERE status = ? ORDER BY created_at DESC LIMIT ? OFFSET ?" 
@@ -82,10 +98,14 @@
 
 (defn insert-album [{:keys [name description status]} {:keys [id]}]
   (let [stat (or status 0)]
-  (sql/with-connection db
-    (sql/insert-record
-      :albums
-      {:name name :description description :user_id id :status (Integer. stat)}))))
+    (sql/with-connection db
+      (sql/insert-record
+        :albums
+        {:name name :description description :user_id id :status (Integer. stat)}))
+    (do
+      (swap! album-count-admin inc)
+      (swap! album-count-guest inc))
+    ))
 
 (defn insert-photo-into-album [{:keys [name description filename]} albumid]
   (sql/with-connection db
