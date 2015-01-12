@@ -29,6 +29,9 @@
             ["SELECT COUNT(id) FROM albums WHERE status IN (0, 1)"]
             (:count (first res))))))
 
+(defn generate-in [args]
+  (str "IN (" (clojure.string/join ", " (take (count args) (repeat "?"))) ")"))
+
 (defn drop-tables []
   (sql/with-connection db
     (doseq [tbl ["photos" "albums" "users"]]
@@ -76,15 +79,18 @@
       [:updated_at "TIMESTAMPTZ DEFAULT NULL"])
     (sql/do-commands "CREATE INDEX idx_users_username ON users (username)")))
 
-(defn get-albums [& {:keys [per_page page status] :or {per_page 10 page 1 status :published}}]
+(defn get-albums [& {:keys [per_page page status] :or {per_page 10 page 1 status [:published :draft]}}]
   (let [per_page 
         (if (nil? per_page) 10 (Integer. per_page)) 
         page 
         (if (nil? page) 1 (Integer. page))]
     (sql/with-connection db
       (sql/with-query-results
-        res ["SELECT * FROM albums WHERE status = ? ORDER BY created_at DESC LIMIT ? OFFSET ?" 
-             (status album-status) per_page (* per_page (- page 1))]
+        res (vec (flatten [(str "SELECT * FROM albums WHERE status " (generate-in status) " ORDER BY created_at DESC LIMIT ? OFFSET ?")
+             (map album-status status) per_page (* per_page (- page 1))]))
+        ;res ["SELECT * FROM albums WHERE status = 1"]
+        ;res ["SELECT * FROM albums WHERE status = ? ORDER BY created_at DESC LIMIT ? OFFSET ?"
+             ;1 per_page (* per_page (- page 1))]
         (doall res)))))
 
 (defn get-photos [& {:keys [per_page page] :or {per_page 10 page 1}}]
@@ -143,14 +149,16 @@
     (sql/with-query-results
       res ["SELECT * FROM albums LEFT OUTER JOIN photos ON albums.id = photos.album_id WHERE albums.id = ?" (Integer. album-id)] (doall res))))
 
-; extract IN-clause logic into own fn
+(defn in-clause [args]
+  (flatten [(str "id IN (" (clojure.string/join ", " (take (count args) (repeat "?"))) ")") args]))
+
 (defn delete-albums [ids]
   (sql/with-connection db
-    (sql/delete-rows :albums (flatten [(str "id IN (" (clojure.string/join ", " (take (count ids) (repeat "?"))) ")") ids]))))
+    (sql/delete-rows :albums (in-clause ids))))
 
 (defn delete-photos [ids]
   (sql/with-connection db
-    (sql/delete-rows :photos (flatten [(str "id IN (" (clojure.string/join ", " (take (count ids) (repeat "?"))) ")") ids]))))
+    (sql/delete-rows :photos (in-clause ids))))
 
 (defn get-user [username]
   (sql/with-connection db

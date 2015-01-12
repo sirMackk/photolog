@@ -6,6 +6,7 @@
 /albums
 /.sass-cache
 .todo
+/logs
 pom.xml
 *.jar
 *.class

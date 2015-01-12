@@ -14,8 +14,7 @@
 (defn admin-index [req]
   (let [albums (db/get-albums :page (:page req) :per_page 30)
         pagination {:current (get req :page 1) :per 30 
-                    :total (:total_count (first albums))}]
-    (prn (str "panie" albums))
+                    :total @db/album-count-admin}]
     (admin-views/admin-index req albums pagination)))
 
 (defn admin-edit-album [id]
