@@ -29,10 +29,12 @@
     :env {:proto "postgresql" :subname "//localhost/photolog_dev"
           :db-user "developer" :password "a" 
           :log-path "logs/dev.log" :log-size 104857600
+          :log-level :info
           :log-backlog 5 :log-enabled true}}
    :test
    {:env {:proto "postgresql" :subname "//localhost/photolog_test"
           :db-user "developer" :password "a"
           :log-path "" :log-size 1
+          :log-level :error
           :log-backlog 0 :log-enabled false}}
    })

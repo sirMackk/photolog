@@ -21,7 +21,7 @@
 
 (timbre/set-config!
   [:appenders :rotor]
-  {:min-level :info
+  {:min-level (env :log-level)
    :async false
    :enabled? (env :log-enabled)
    :max-message-per-msecs nil

@@ -97,14 +97,15 @@
 
 
 (defn insert-album [{:keys [name description status]} {:keys [id]}]
-  (let [stat (or status 0)]
+  (let [stat (or status 0) new-record
     (sql/with-connection db
       (sql/insert-record
         :albums
-        {:name name :description description :user_id id :status (Integer. stat)}))
+        {:name name :description description :user_id id :status (Integer. stat)}))]
     (do
       (swap! album-count-admin inc)
       (swap! album-count-guest inc))
+    new-record
     ))
 
 (defn insert-photo-into-album [{:keys [name description filename]} albumid]
