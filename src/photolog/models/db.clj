@@ -3,40 +3,47 @@
             [noir.util.crypt :as crypt]
             [environ.core :refer [env]]))
 ;TODO's:
-; use macro for with-connection db
 ; update to not use deprecated 
-
-
+; macro out table create with-connection db
 
 (def db {:subprotocol (env :proto) 
          :subname (env :subname)
          :user (env :db-user)
          :password (env :password) })
 
+(defmacro with-db [f & body]
+  `(sql/with-connection db (~f ~@body)))
+
 (def album-status 
   {:draft 0 :published 1})
 
 (def album-count-admin
-  (atom (sql/with-connection db
-          (sql/with-query-results res
-            ["SELECT COUNT(id) FROM albums"]
-            (:count (first res))))))
+  (try
+    (atom (sql/with-connection db
+            (sql/with-query-results res
+              ["SELECT COUNT(id) FROM albums"]
+              (:count (first res)))))
+    (catch Exception ex
+      (atom 0))))
 
 ; refactor these two atoms out
+; check for the right exception
 (def album-count-guest
-  (atom (sql/with-connection db
-          (sql/with-query-results res
-            ["SELECT COUNT(id) FROM albums WHERE status IN (0, 1)"]
-            (:count (first res))))))
+  (try
+    (atom (sql/with-connection db
+            (sql/with-query-results res
+              ["SELECT COUNT(id) FROM albums WHERE status IN (0, 1)"]
+              (:count (first res)))))
+    (catch Exception ex
+      (atom 0))))
 
 (defn generate-in [args]
   (str "IN (" (clojure.string/join ", " (take (count args) (repeat "?"))) ")"))
 
 (defn drop-tables []
-  (sql/with-connection db
-    (doseq [tbl ["photos" "albums" "users"]]
-      (sql/do-commands
-        (str "DROP TABLE IF EXISTS " tbl)))))
+  (with-db doseq [tbl ["photos" "albums" "users"]]
+    (sql/do-commands
+      (str "DROP TABLE IF EXISTS " tbl))))
 
 (defn create-table-albums []
   (sql/with-connection db
@@ -84,30 +91,24 @@
         (if (nil? per_page) 10 (Integer. per_page)) 
         page 
         (if (nil? page) 1 (Integer. page))]
-    (sql/with-connection db
-      (sql/with-query-results
+    (with-db sql/with-query-results
         res (vec (flatten [(str "SELECT * FROM albums WHERE status " (generate-in status) " ORDER BY created_at DESC LIMIT ? OFFSET ?")
              (map album-status status) per_page (* per_page (- page 1))]))
-        ;res ["SELECT * FROM albums WHERE status = 1"]
-        ;res ["SELECT * FROM albums WHERE status = ? ORDER BY created_at DESC LIMIT ? OFFSET ?"
-             ;1 per_page (* per_page (- page 1))]
-        (doall res)))))
+        (doall res))))
 
 (defn get-photos [& {:keys [per_page page] :or {per_page 10 page 1}}]
   (let [per_page (if (nil? per_page) 10 (Integer. per_page)) page (if (nil? page) 1 (Integer. page))]
     ; might need a join to get a user name here bro
-    (sql/with-connection db
-      (sql/with-query-results
+    (with-db sql/with-query-results
         res ["SELECT * FROM photos ORDER BY created_at DESC LIMIT ? OFFSET ?" per_page (* per_page (- page 1))]
-        (doall res)))))
+        (doall res))))
 
 
 (defn insert-album [{:keys [name description status]} {:keys [id]}]
   (let [stat (or status 0) new-record
-    (sql/with-connection db
-      (sql/insert-record
-        :albums
-        {:name name :description description :user_id id :status (Integer. stat)}))]
+    (with-db sql/insert-record
+      :albums
+      {:name name :description description :user_id id :status (Integer. stat)})]
     (do
       (swap! album-count-admin inc)
       (swap! album-count-guest inc))
@@ -115,18 +116,16 @@
     ))
 
 (defn insert-photo-into-album [{:keys [name description filename]} albumid]
-  (sql/with-connection db
-    (sql/insert-record
+  (with-db sql/insert-record
       :photos
-      {:name name :description description :filename filename :album_id albumid})))
+      {:name name :description description :filename filename :album_id albumid}))
 
 
 ; mite b unused
 (defn insert-photo [name filename description userid]
-  (sql/with-connection db
-    (sql/insert-record
+  (with-db sql/insert-record
       :photos
-      {:name name :filename filename :description description :userid userid})))
+      {:name name :filename filename :description description :userid userid}))
 
 ; move to utils?
 (defn current-time []
@@ -134,42 +133,35 @@
 
 (defn update-album [{:keys [name description id status]} {user_id :id}]
   (let [stat (or status 0)]
-  (sql/with-connection db
-    (let [now (current-time)]
-      (sql/update-values :albums ["id = ?" (Integer. id)] {:name name :description description :user_id (Integer. user_id) :updated_at now :status (Integer. stat)})))))
+    (with-db let [now (current-time)]
+      (sql/update-values :albums ["id = ?" (Integer. id)] {:name name :description description :user_id (Integer. user_id) :updated_at now :status (Integer. stat)}))))
     
 
 (defn get-album [album-id]
-  (sql/with-connection db
-    (sql/with-query-results
-      res ["SELECT * FROM albums where id = ?" (Integer. album-id)] (first res))))
+  (with-db sql/with-query-results
+      res ["SELECT * FROM albums where id = ?" (Integer. album-id)] (first res)))
 
 (defn get-album-with-photos [album-id]
-  (sql/with-connection db
-    (sql/with-query-results
-      res ["SELECT * FROM albums LEFT OUTER JOIN photos ON albums.id = photos.album_id WHERE albums.id = ?" (Integer. album-id)] (doall res))))
+  (with-db sql/with-query-results
+      res ["SELECT * FROM albums LEFT OUTER JOIN photos ON albums.id = photos.album_id WHERE albums.id = ?" (Integer. album-id)] (doall res)))
 
 (defn in-clause [args]
   (flatten [(str "id IN (" (clojure.string/join ", " (take (count args) (repeat "?"))) ")") args]))
 
 (defn delete-albums [ids]
-  (sql/with-connection db
-    (sql/delete-rows :albums (in-clause ids))))
+  (with-db sql/delete-rows :albums (in-clause ids)))
 
 (defn delete-photos [ids]
-  (sql/with-connection db
-    (sql/delete-rows :photos (in-clause ids))))
+  (with-db sql/delete-rows :photos (in-clause ids)))
 
 (defn get-user [username]
-  (sql/with-connection db
-    (sql/with-query-results
+  (with-db sql/with-query-results
       res ["SELECT * FROM users WHERE username = ?" username]
-      (first res))))
+      (first res)))
 
 (defn insert-user [username password]
-  (sql/with-connection db
-    (sql/insert-record
-      :users {:username username :password (crypt/encrypt password)})))
+  (with-db sql/insert-record
+      :users {:username username :password (crypt/encrypt password)}))
 
 (defn create-test-user []
   (insert-user "matt" "123123"))
