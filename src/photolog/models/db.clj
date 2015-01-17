@@ -3,6 +3,7 @@
             [noir.util.crypt :as crypt]
             [environ.core :refer [env]]))
 ;TODO's:
+; some db functions cast to Integer, some only accept integer. Unify this.
 ; update to not use deprecated 
 ; macro out table create with-connection db
 
@@ -135,7 +136,11 @@
   (let [stat (or status 0)]
     (with-db let [now (current-time)]
       (sql/update-values :albums ["id = ?" (Integer. id)] {:name name :description description :user_id (Integer. user_id) :updated_at now :status (Integer. stat)}))))
-    
+
+(defn update-photo [{:keys [name desc id]}]
+  (with-db let [now (current-time)]
+    (sql/update-values :photos ["id = ?" (Integer. id)]
+                       {:name name :description desc :updated_at now})))
 
 (defn get-album [album-id]
   (with-db sql/with-query-results

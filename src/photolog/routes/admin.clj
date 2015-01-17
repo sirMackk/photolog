@@ -64,11 +64,19 @@
 (defn admin-delete-album [form]
   (delete-items (keys (:albums form)) db/delete-albums "/admin"))
 
-(defn admin-delete-photos [form]
-  (delete-items 
-    (keys (:photos_del form)) 
-    db/delete-photos 
-    (str "/admin/" (:album_id form) "/edit")))
+(defn admin-update-photos [form]
+  (let [photos-del (:photos_del form)
+        photos-name (:photos_name form)
+        photos-desc (:photos_desc form)
+        grouped (group-by #(contains? photos-del %) (keys photos-name))]
+
+    (if-not (empty? (grouped true)) ; (grouped true) - ids to delete
+      (db/delete-photos (map #(Integer. %) (grouped true))))
+    (doseq [id (grouped false)]
+      (db/update-photo {:name (photos-name id) :desc (photos-desc id) :id id}))
+    (session/flash-put! :notice "Photos updated")
+    (resp/redirect (str "/admin/" (:album_id form) "/edit"))
+    ))
 
 (defn serve-photo [album-name photo-filename]
   (file-response (str albums File/separator album-name File/separator thumb-prefix photo-filename)))
@@ -80,5 +88,5 @@
   (GET "/admin/:album-id/edit" [album-id] (admin-edit-album album-id))
   (POST "/admin/edit" {form :params {multip "photos"} :multipart-params} (admin-edit-album-post form multip))
   (POST "/admin/delete-albums" {form :params} (admin-delete-album form))
-  (POST "/admin/delete-photos" {form :params} (admin-delete-photos form))
+  (POST "/admin/update-photos" {form :params} (admin-update-photos form))
   (GET "/albums/:album-name/:photo-filename" [album-name photo-filename] (serve-photo album-name photo-filename)))

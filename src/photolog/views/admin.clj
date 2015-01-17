@@ -68,13 +68,17 @@
   (layout/admin
     (album-form (str "/admin/edit") (first album))
     [:hr]
-    (form-to [:post "/admin/delete-photos"]
+    (form-to [:post "/admin/update-photos"]
       (anti-forgery-field)
       (hidden-field "album_id" id)
-      (for [photo album]
+      (for [photo album :let [id (:id_2 photo)]]
         (do 
           [:div.photo
-            (label (str "photos_del_[" id "]") "Delete?")
+            (label (str "photos_del[" id "]") "Delete?")
             (check-box (str "photos_del[" (:id_2 photo) "]"))
+            (label (str "photos_name[" id "]") "Name")
+            (text-field (str "photos_name[" id "]") (:name_2 photo))
+            (label (str "photos_desc[" id "]") "Desc")
+            (text-field (str "photos_desc[" id "]") (:description_2 photo))
             (image (str "/" albums File/separator (slugidize (:name photo)) File/separator (:filename photo)))]))
-      (submit-button "Delete selected photos"))))
+      (submit-button "Update photos"))))

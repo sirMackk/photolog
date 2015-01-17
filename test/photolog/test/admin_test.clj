@@ -126,3 +126,43 @@
                                         :photos f})
         (request "/admin/1/edit")))))
 
+(deftest update-photo-fields
+  (testing "updating a photos fields"
+    (let [f (file fixture)]
+      (with-user
+        (fn [rsp]
+          (let [body (get-in rsp [:response :body])]
+            (is (not (nil? (re-find #"updated-name" body))))
+            (is (not (nil? (re-find #"updated-desc" body))))))
+        (request "/admin/new-album" :request-method :post
+                                    :params {:name "album-test-photo"
+                                             :description "album test desc"
+                                             :status "1"
+                                             :photos f})
+        (request "/admin/update-photos" :request-method :post
+                                        :body
+                                          (.getBytes "album_id=1&photos_name[1]=photo-name&photos_desc[1]=photo-desc" "UTF-8"))
+        (request "/admin/update-photos" :request-method :post
+                                        :body
+                                          (.getBytes "album_id=1&photos_name[1]=updated-name&photos_desc[1]=updated-desc" "UTF-8"))
+        (request "/admin/1/edit")))))
+
+(deftest update-photo-delete-photo
+  (testing "deleting a photo from an album"
+    (let [f (file fixture)]
+      (with-user
+        (fn [rsp]
+          (let [body (get-in rsp [:response :body])]
+            (is (nil? (re-find #"photo-name" body)))))
+        (request "/admin/new-album" :request-method :post
+                                    :params {:name "album-test-photo"
+                                             :description "album test desc"
+                                             :status "1"
+                                             :photos f})
+        (request "/admin/update-photos" :request-method :post
+                                        :body
+                                          (.getBytes "album_id=1&photos_name[1]=photo-name&photos_desc[1]=photo-desc" "UTF-8"))
+        (request "/admin/update-photos" :request-method :post
+                                        :body
+                                          (.getBytes "album_id=1&photos_del[1]=true&photos_name[1]=photo-name" "UTF-8"))
+        (request "/admin/1/edit")))))
