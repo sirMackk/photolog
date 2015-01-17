@@ -166,3 +166,56 @@
                                         :body
                                           (.getBytes "album_id=1&photos_del[1]=true&photos_name[1]=photo-name" "UTF-8"))
         (request "/admin/1/edit")))))
+
+(deftest update-two-photos
+  (testing "updating more than 1 photo"
+    (let [f (file fixture)]
+      (with-user
+        (fn [rsp]
+          (let [body (get-in rsp [:response :body])]
+            (is (not (nil? (re-find #"update-name-1" body))))
+            (is (not (nil? (re-find #"update-name-2" body))))
+            (is (not (nil? (re-find #"update-desc-1" body))))
+            (is (not (nil? (re-find #"update-desc-2" body))))))
+        (request "/admin/new-album" :request-method :post
+                                    :params {:name "album-test-photo"
+                                             :description "album test desc" 
+                                             :status "1"
+                                             :photos f})
+        (request "/admin/edit" :request-method :post
+                               :params {:name "new-name"
+                                        :description "New Desc"
+                                        :id 1
+                                        :photos f})
+        (request "/admin/update-photos" :request-method :post
+                                        :body
+                                          (.getBytes "album_id=1&photos_name[1]=update-name-1&photos_desc[1]=update-desc-1&photos_name[2]=update-name-2&photos_desc[2]=update-desc-2" "UTF-8"))
+        (request "/admin/1/edit")))))
+
+(deftest update-two-photos
+  (testing "updating more than 1 photo"
+    (let [f (file fixture)]
+      (with-user
+        (fn [rsp]
+          (let [body (get-in rsp [:response :body])]
+            (is (nil? (re-find #"update-name-1" body)))
+            (is (not (nil? (re-find #"update-name-2" body))))
+            (is (nil? (re-find #"update-desc-1" body)))
+            (is (not (nil? (re-find #"update-desc-2" body))))))
+        (request "/admin/new-album" :request-method :post
+                                    :params {:name "album-test-photo"
+                                             :description "album test desc" 
+                                             :status "1"
+                                             :photos f})
+        (request "/admin/edit" :request-method :post
+                               :params {:name "new-name"
+                                        :description "New Desc"
+                                        :id 1
+                                        :photos f})
+        (request "/admin/update-photos" :request-method :post
+                                        :body
+                                          (.getBytes "album_id=1&photos_name[1]=update-name-1&photos_desc[1]=update-desc-1&photos_name[2]=update-name-2&photos_desc[2]=update-desc-2" "UTF-8"))
+        (request "/admin/update-photos" :request-method :post
+                                        :body
+                                          (.getBytes "album_id=1&photos_name[1]=update-name-1&photos_desc[1]=update-desc-1&photos_del[1]=true" "UTF-8"))
+        (request "/admin/1/edit")))))
