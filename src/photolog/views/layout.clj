@@ -12,7 +12,7 @@
     [:head
      [:title "Welcome to photolog"]
      (include-css "/css/app.min.css")
-     (include-js "/js/jquery.min.js")]
+     (include-js "/js/zepto.min.js")]
 
 
     [:body#top

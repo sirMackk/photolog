@@ -104,6 +104,15 @@
         res ["SELECT * FROM photos ORDER BY created_at DESC LIMIT ? OFFSET ?" per_page (* per_page (- page 1))]
         (doall res))))
 
+(defn get-albums-with-photos [& {:keys [per_page page status] :or {per_page 5 page 1 status [:published]}}]
+  (let [per_page ; this has to be refactorable
+        (if (nil? per_page) 10 (Integer. per_page))
+        page
+        (if (nil? page) 1 (Integer. page))]
+    (with-db sql/with-query-results
+      res (vec (flatten [(str "SELECT * FROM albums LEFT JOIN photos ON albums.id = photos.album_id WHERE albums.status " (generate-in status) " ORDER BY albums.created_at DESC LIMIT ? OFFSET ?")
+                         (map album-status status) per_page (* per_page (- page 1))]))
+      (doall res)))) ; add pagination in controller or factor out paginatin to db totally
 
 (defn insert-album [{:keys [name description status]} {:keys [id]}]
   (let [stat (or status 0) new-record

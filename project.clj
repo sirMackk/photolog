@@ -1,5 +1,5 @@
 (defproject photolog "0.1.0-SNAPSHOT"
-  :description "A simple infinite scroll photolog application"
+  :description "A simple photolog application"
   :url ""
   :dependencies [[org.clojure/clojure "1.6.0"]
                  [compojure "1.1.6"]

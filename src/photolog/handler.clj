@@ -10,7 +10,7 @@
             [ring.middleware.multipart-params :refer [wrap-multipart-params]]
             [environ.core :refer [env]]
             [photolog.routes.admin :refer [admin-routes]]
-            [photolog.routes.home :refer [home-routes]]
+            [photolog.routes.blog :refer [blog-routes]]
             [photolog.routes.auth :refer [auth-routes]]))
 
 (defn init []
@@ -60,6 +60,6 @@
       ;(wrap-session)))
 
 (def app 
-    (noir-mid/app-handler [home-routes auth-routes admin-routes app-routes]
+    (noir-mid/app-handler [blog-routes auth-routes admin-routes app-routes]
                                 :middleware [wrap-anti-forgery wrap-multipart-params logga]
                                 :access-rules [{:uri "/admin*" :rule admin-access}]))
