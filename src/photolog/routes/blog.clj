@@ -15,15 +15,13 @@
       (list* 
         [:h2 (:name (first album-photos))]
         (for [photo album-photos]
-          (list*
+          (list
           (image (str "/" albums File/separator (slugidize (:name photo)) File/separator (:filename photo)))
           [:h4 (:name_2 photo)]))))))
 
-(defn get-albums [page]
-  (resp/json (partition-by :id (db/get-album-with-photos :page page))))
-
-      
+(defn get-albums [page per-page]
+  (resp/json (partition-by :id (db/get-albums-with-photos :page page :per_page per-page))))
 
 (defroutes blog-routes
   (GET "/" [] (home))
-  (GET "/albums" [page] (get-albums page)))
+  (GET "/albums" [page per-page] (get-albums page per-page)))
