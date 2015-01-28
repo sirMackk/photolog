@@ -1,4 +1,7 @@
 @import "app/config",
+        "app/functions_mixins",
         "app/normalize",
 
-        "app/layout";
+        "app/layout",
+        "app/album",
+        "app/lightbox";

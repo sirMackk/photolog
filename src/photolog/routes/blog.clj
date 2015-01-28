@@ -1,23 +1,12 @@
 (ns photolog.routes.blog
   (:require [compojure.core :refer :all]
-            [hiccup.element :refer [image link-to]]
             [noir.response :as resp]
-            [photolog.utils :refer [albums slugidize]]
             [photolog.models.db :as db]
-            [photolog.views.layout :as layout])
+            [photolog.views.blog :as blog])
   (:import [java.io File]))
 
 (defn home []
-  (layout/common 
-    [:h1 "Blog"]
-    (prn (db/get-albums-with-photos))
-    (for [album-photos (partition-by :id (db/get-albums-with-photos))]
-      (list* 
-        [:h2 (:name (first album-photos))]
-        (for [photo album-photos]
-          (list
-          (image (str "/" albums File/separator (slugidize (:name photo)) File/separator (:filename photo)))
-          [:h4 (:name_2 photo)]))))))
+  (blog/blog-home (db/get-albums-with-photos)))
 
 (defn get-albums [page per-page]
   (resp/json (partition-by :id (db/get-albums-with-photos :page page :per_page per-page))))

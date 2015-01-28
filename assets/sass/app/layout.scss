@@ -8,4 +8,47 @@ html {
 
 .wrapper {
   max-width: $wrapper-width;
+  margin: 0 auto;
 }
+
+@font-face {
+  src: url('OpenSans-Light.ttf');
+  font-family: 'open-sans';
+}
+
+nav {
+  position: fixed;
+  bottom: 25px;
+  right: 35px;
+  width: 10%;
+  text-align: right;
+
+  a {
+    font-family: $font;
+    font-size: 16px;
+    text-decoration: none;
+    font-style: italic;
+    color: $col-med-gray;
+    transition: all 0.2s ease-in-out;
+
+    &:hover {
+      color: $col-very-dark-gray;
+    }
+  }
+}
+
+header {
+  border-bottom: 2px dashed $col-light-gray;
+  padding-bottom: 36px;
+
+  h1 {
+    font-famly: $font;
+    font-size: 48px;
+    letter-spacing: 8px;
+    font-weight: 300;
+  }
+}
+
+
+
+

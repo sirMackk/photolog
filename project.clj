@@ -14,7 +14,9 @@
                  [peridot "0.3.1"]
                  [ring/ring-anti-forgery "1.0.0"]
                  [org.clojure/java.jdbc "0.3.6"]
+                 [http-kit "2.1.19"]
                  [ring-server "0.3.1"]]
+  :main photolog.main
   :plugins [[lein-ring "0.8.12"] [lein-environ "0.4.0"]]
   :ring {:handler photolog.handler/app
          :init photolog.handler/init

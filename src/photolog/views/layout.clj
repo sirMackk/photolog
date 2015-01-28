@@ -7,12 +7,17 @@
   `(if-let [key# (session/flash-get ~ses-key)]
      [:h3 (str ~string key#)]))
 
-(defn base [& body]
+(defn blog-head []
+   (include-js "/js/blog.min.js"))
+
+
+(defn base [body & head]
   (html5
     [:head
      [:title "Welcome to photolog"]
      (include-css "/css/app.min.css")
-     (include-js "/js/zepto.min.js")]
+     [:meta {:name "viewport" :content "width=device-width"}]
+     head]
 
 
     [:body#top
@@ -29,7 +34,7 @@
     (link-to "/admin/new-album" "New Album")]])
 
 (defn common [& body]
-  (base body))
+  (base body (blog-head)))
 
 (defn admin [& body]
   (base 

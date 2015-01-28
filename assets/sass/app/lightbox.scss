@@ -1,0 +1,40 @@
+.lightbox {
+  position: absolute;
+  z-index: -1;
+  left: 50%;
+  width: 90%;
+  height: 100%;
+  opacity: 0;
+  transform: translateX(-50%);
+  transition: opacity 0.2s ease-in-out;
+
+  .panel {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background-color: $col-med-white;
+    width: 20%;
+
+    p {
+      padding: 50px 30px 0;
+      font-face: $font;
+      font-size: 18px;
+      text-decoration: none;
+    }
+
+    a {
+      display: inline-block;
+      position: absolute;
+      top: 10px;
+      right: 0;
+      background-color: $col-dark-steel;
+      color: black;
+      padding: 10px 20px;
+      font-face: $font;
+      font-size: 18px;
+      text-decoration: none;
+      font-style: italic;
+    }
+  }
+}
+
