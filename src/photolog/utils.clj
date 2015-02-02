@@ -54,3 +54,6 @@
         (scale-image output_image)
         "jpeg"
         (File. (str path thumb-prefix filename))))))
+
+(defn friendly-date [date]
+  (.format (java.text.SimpleDateFormat. "yyyy-MM-dd") date))

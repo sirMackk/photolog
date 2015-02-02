@@ -1,11 +1,8 @@
 $(document).ready(function() {
-  console.log('doc ready');
   // init first batch of albums
   (function($, undefined) {
-    console.log('init masonry');
     window.msr = {};
 
-    console.log($('.album'));
     $('.album').each(function(i) {
       var _this = this;
       imagesLoaded(_this, function() {
@@ -19,7 +16,6 @@ $(document).ready(function() {
 
   // init lightbox for first batch of albums
   (function($, undefined) {
-    console.log('init lightbox');
     // lightbox prototype
     var lb = $('.light-box');
     var close = function() {
@@ -30,12 +26,12 @@ $(document).ready(function() {
     $('.light-box a').on('click', close);
 
     $('.photo').on('click', function(e) {
-      var topY = (window.pageYOffset || document.documentElement.scrollTop);
+      var topY = ($('body').scrollTop() || $('html').scrollTop());
       var photo = $(e.currentTarget);
       var image = photo.find('img');
       lb.css({'background-image': 'url(' + image.prop('src') + ')'});
       lb.css({'background-position': '50% 50%', 'background-repeat': 'no-repeat',
-              'background-size': 'contain', 'top': $('body').scrollTop() + 'px'})
+              'background-size': 'contain', 'top': topY + 'px'})
               
       lb.css({'z-index': '5'});
       lb.css({'opacity': '1'});

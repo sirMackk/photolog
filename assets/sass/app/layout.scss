@@ -41,11 +41,18 @@ header {
   border-bottom: 2px dashed $col-light-gray;
   padding-bottom: 36px;
 
-  h1 {
+  h1 a {
     font-famly: $font;
     font-size: 48px;
     letter-spacing: 8px;
     font-weight: 300;
+    text-decoration: none;
+    color: $col-dark-gray;
+    transition: color 0.2s ease-in-out;
+
+    &:hover {
+      color: black;
+    }
   }
 }
 
