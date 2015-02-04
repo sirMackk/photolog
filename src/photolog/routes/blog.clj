@@ -5,12 +5,11 @@
             [photolog.views.blog :as blog])
   (:import [java.io File]))
 
-(defn home []
-  (blog/blog-home (db/get-albums-with-photos)))
-
-(defn get-albums [page per-page]
-  (resp/json (partition-by :id (db/get-albums-with-photos :page page :per_page per-page))))
+(defn home [req]
+  (let [albums (db/get-albums-with-photos :page (:page req) :per_page 3)
+        pagination {:current (get req :page 1) :per 3 
+                    :total @db/album-count-guest}]
+  (blog/blog-home albums pagination)))
 
 (defroutes blog-routes
-  (GET "/" [] (home))
-  (GET "/albums" [page per-page] (get-albums page per-page)))
+  (GET "/" {pars :params} (home pars)))

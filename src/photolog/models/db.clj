@@ -109,6 +109,7 @@
         (if (nil? per_page) 10 (Integer. per_page))
         page
         (if (nil? page) 1 (Integer. page))]
+    (prn page)
     (with-db sql/with-query-results
       res (vec (flatten [(str "SELECT * FROM albums LEFT JOIN photos ON albums.id = photos.album_id WHERE albums.status " (generate-in status) " ORDER BY albums.created_at DESC LIMIT ? OFFSET ?")
                          (map album-status status) per_page (* per_page (- page 1))]))

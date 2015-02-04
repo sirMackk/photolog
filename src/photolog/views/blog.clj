@@ -4,10 +4,28 @@
             [photolog.views.layout :as layout])
   (:import [java.io File]))
 
-(defn blog-home [album-batch]
+(defn paginate [{:keys [current per total]}]
+  (let [pages (int (Math/ceil (/ (Integer. total) (Integer. per))))
+        current (Integer. current)]
+    (if (> pages 1)
+      (list
+        (if (not= current 1)
+          (list
+            (link-to "/?page=1" "<<")
+            [:br]
+            (link-to (str "/?page=" (dec current)) "<")))
+        [:p (str "Page " current " of " pages)]
+        (if (not= current pages)
+          (list
+            (link-to (str "/?page=" (inc current)) ">")
+            [:br]
+            (link-to (str "/?page=" pages) ">>")))))))
+
+(defn blog-home [album-batch pagination]
   (layout/common 
     [:nav
-      (link-to "/about" "About")]
+      (link-to "/about" "About")
+      (paginate pagination)]
     [:header
       [:h1
         (link-to "/" "Photolog")]]
