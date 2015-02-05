@@ -42,7 +42,7 @@
            (for [photo album-photos]
              (list
                [:div {:class "photo"}
-                 (image (str "/" albums File/separator (slugidize (:name photo)) File/separator (:filename photo)) (:description_2 photo))
+                 (image (str "/" albums File/separator (slugidize (:name photo)) File/separator "thumb_" (:filename photo)) (:description_2 photo))
                 [:div {:class "photo-title"}
                  (:name_2 photo)]]))]]))
      [:div {:class "light-box"}

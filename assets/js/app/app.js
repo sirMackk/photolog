@@ -29,7 +29,7 @@ $(document).ready(function() {
       var topY = ($('body').scrollTop() || $('html').scrollTop());
       var photo = $(e.currentTarget);
       var image = photo.find('img');
-      lb.css({'background-image': 'url(' + image.prop('src') + ')'});
+      lb.css({'background-image': 'url(' + image.prop('src').replace('thumb_', '') + ')'});
       lb.css({'background-position': '50% 50%', 'background-repeat': 'no-repeat',
               'background-size': 'contain', 'top': topY + 'px'})
               

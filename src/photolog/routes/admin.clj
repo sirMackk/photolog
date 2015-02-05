@@ -79,7 +79,8 @@
     ))
 
 (defn serve-photo [album-name photo-filename]
-  (file-response (str albums File/separator album-name File/separator thumb-prefix photo-filename)))
+  (prn photo-filename)
+  (file-response (str albums File/separator album-name File/separator photo-filename)))
 
 (def-restricted-routes admin-routes
   (GET "/admin" {pars :params} (admin-index pars))
