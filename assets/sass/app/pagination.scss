@@ -1,0 +1,21 @@
+.paginate-me {
+  p {
+    font-family: 'open-sans';
+    font-size: 15px;
+    margin-left: 10px;
+    display: inline-block;
+  }
+
+  a {
+    font-decoration: none;
+    font-style: normal;
+    font-weight: 900;
+    margin-left: 10px;
+    font-size: 18px;
+    vertical-align: -2px;
+
+    &:first-child {
+      margin-left: 0;
+    }
+  }
+}

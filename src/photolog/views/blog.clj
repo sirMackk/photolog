@@ -12,20 +12,19 @@
         (if (not= current 1)
           (list
             (link-to "/?page=1" "<<")
-            [:br]
             (link-to (str "/?page=" (dec current)) "<")))
         [:p (str "Page " current " of " pages)]
         (if (not= current pages)
           (list
             (link-to (str "/?page=" (inc current)) ">")
-            [:br]
             (link-to (str "/?page=" pages) ">>")))))))
 
 (defn blog-home [album-batch pagination]
   (layout/common 
     [:nav
       (link-to "/about" "About")
-      (paginate pagination)]
+     [:div {:class "paginate-me"}
+      (paginate pagination)]]
     [:header
       [:h1
         (link-to "/" "Photolog")]]
