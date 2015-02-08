@@ -14,7 +14,7 @@
 (defn base [body & head]
   (html5
     [:head
-     [:title "Welcome to photolog"]
+     [:title "Photolog"]
      (include-css "/css/app.min.css")
      [:meta {:name "viewport" :content "width=device-width"}]
      head]

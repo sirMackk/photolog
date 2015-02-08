@@ -6,8 +6,8 @@
   (:import [java.io File]))
 
 (defn home [req]
-  (let [albums (db/get-albums-with-photos :page (:page req) :per_page 3)
-        pagination {:current (get req :page 1) :per 3 
+  (let [albums (db/get-albums-with-photos :page (:page req) :per_page 10)
+        pagination {:current (get req :page 1) :per 10 
                     :total @db/album-count-guest}]
   (blog/blog-home albums pagination)))
 
