@@ -23,6 +23,14 @@ nav {
   width: 12%;
   text-align: right;
 
+  .about-box {
+    position: absolute;
+    top: -70px;
+    width: 130%;
+    right: -200%;
+    transition: all 0.2s ease-in-out;
+  }
+
   a {
     font-family: $font;
     font-size: 16px;

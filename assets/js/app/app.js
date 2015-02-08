@@ -14,6 +14,27 @@ $(document).ready(function() {
     });
   })(Zepto);
 
+  (function($, undefined) {
+    var about = $('.about');
+    var aboutBox = $('.about-box');
+    var toggle = false;
+
+    about.on('click', function(e) {
+      e.preventDefault();
+
+      if (toggle) {
+        toggle = false;
+        aboutBox.css({'right': '-200%'});
+      } else {
+        toggle = true;
+        aboutBox.css({'right': 0});
+      }
+    });
+  })(Zepto);
+
+
+
+
   // init lightbox for first batch of albums
   (function($, undefined) {
     // lightbox prototype

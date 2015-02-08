@@ -22,7 +22,12 @@
 (defn blog-home [album-batch pagination]
   (layout/common 
     [:nav
-      (link-to "/about" "About")
+      [:div {:class "about-box"}
+       [:p "Maintained by"
+        (link-to "https://mattscodecave.com" "Matt")
+        " & "
+        (link-to "http://trznska.com" "Trznska")]]
+      (link-to {:class "about"} "/about" "About")
      [:div {:class "paginate-me"}
       (paginate pagination)]]
     [:header
