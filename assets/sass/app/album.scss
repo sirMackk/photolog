@@ -17,16 +17,12 @@
       font-size: 18px;
       display: inline-block;
     }
-
-    .date {
-      float: right;
-    }
   }
   
   .photo {
     margin: 0;
     padding: 0;
-    width: (100% / 3);
+    width: (100% / 3) - 0.8%;
     margin-bottom: 10px;
 
     img {
