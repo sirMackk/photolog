@@ -34,8 +34,8 @@
   "Creates an empty file (File.) and uses ImageIO/write
   to write BufferedImage into that file."
   (let [path (str albums File/separator (slugidize album-name) File/separator)]
-    (shell/sh "convert" "resize" "1920x" filename (str large-prefix filename) :dir path)
-    (shell/sh "convert" "resize" "300x" filename (str thumb-prefix filename) :dir path)))
+    (shell/sh "convert" "-resize" "1920x" filename (str large-prefix filename) :dir path)
+    (shell/sh "convert" "-resize" "300x" filename (str thumb-prefix filename) :dir path)))
 
 (defn friendly-date [date]
   (.format (java.text.SimpleDateFormat. "yyyy-MM-dd") date))
