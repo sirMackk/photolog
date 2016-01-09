@@ -46,10 +46,19 @@ $(document).ready(function() {
 
     $('.light-box a').on('click', close);
 
+
     $('.photo').on('click', function(e) {
       var topY = ($('body').scrollTop() || $('html').scrollTop());
       var photo = $(e.currentTarget);
       var image = photo.find('img');
+
+      // replace thumbnail with high res image after loading it
+      var highRes = new Image();
+      highRes.onload = function() {
+        lb.css({'background-image': 'url(' + image.prop('src').replace('thumb_', 'large_') + ')'});
+      };
+      highRes.src = image.prop('src');
+
       lb.css({'background-image': 'url(' + image.prop('src').replace('thumb_', 'large_') + ')'});
       lb.css({'background-position': '50% 50%', 'background-repeat': 'no-repeat',
               'background-size': 'contain', 'top': topY + 'px'})
