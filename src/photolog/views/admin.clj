@@ -80,5 +80,5 @@
             (text-field (str "photos_name[" id "]") (:name_2 photo))
             (label (str "photos_desc[" id "]") "Desc")
             (text-field (str "photos_desc[" id "]") (:description_2 photo))
-            (image (str "/" albums File/separator (slugidize (:name photo)) File/separator (:filename photo)))]))
+            (image (str "/" albums File/separator (slugidize (:name photo)) File/separator "thumb_" (:filename photo)))]))
       (submit-button "Update photos"))))
