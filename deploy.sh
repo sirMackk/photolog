@@ -1,7 +1,7 @@
 usage() { echo "Usage: deploy.sh -c to check; deploy.sh -d to deploy"; exit 1; }
 
 checkUptime() { 
-  ssh -p ${portno} ${uzer}@${ip} uptime
+  ssh -p ${portno} ${uzer}@${domain} uptime
 }
 
 createUberJar() {
@@ -9,18 +9,18 @@ createUberJar() {
 }
 
 createRelease() {
-  ssh -p${portno} ${uzer}@${ip} "cd ${release_dir}; mkdir ${1}"
+  ssh -p${portno} ${uzer}@${domain} "cd ${release_dir}; mkdir ${1}"
 }
 
 cleanUpReleases() {
-  if $(ssh -p${portno} ${uzer}@${ip} "cd ${release_dir}; [ \$(ls | wc -l) -gt ${keep} ];"); then
+  if $(ssh -p${portno} ${uzer}@${domain} "cd ${release_dir}; [ \$(ls | wc -l) -gt ${keep} ];"); then
     # removing the oldest release
-    ssh -p${portno} ${uzer}@${ip} "cd ${release_dir}; rm -r \$(ls -t | tail -${keep} | tail -n1)"
+    ssh -p${portno} ${uzer}@${domain} "cd ${release_dir}; rm -r \$(ls -t | tail -${keep} | tail -n1)"
   fi;
 }
 
 symlinkExtra() {
-  ssh -p${portno} ${uzer}@${ip} "cd ${release_dir}/${1}; for s in ${linked_files[@]}; do ln -s /var/www/photolog/shared/\$s ${release_dir}/${1}; done; cd ../../; if [ -h current-jar ]; then rm current-jar; fi; ln -s ${release_dir}/${1}/photolog*.jar ./current-jar; if [ -h photolog.conf ]; then rm photolog.conf; fi; ln -s ${release_dir}/${1}/photolog.conf ./photolog.conf;"
+  ssh -p${portno} ${uzer}@${domain} "cd ${release_dir}/${1}; for s in ${linked_files[@]}; do ln -s /var/www/photolog/shared/\$s ${release_dir}/${1}; done; cd ../../; if [ -h current-jar ]; then rm current-jar; fi; ln -s ${release_dir}/${1}/photolog*.jar ./current-jar; if [ -h photolog.conf ]; then rm photolog.conf; fi; ln -s ${release_dir}/${1}/photolog.conf ./photolog.conf;"
 }
 
 deployToServer() {
@@ -30,10 +30,10 @@ deployToServer() {
   cleanUpReleases
   createUberJar
   echo "scp\'ing jar to server"
-  scp -P ${portno} ./target/photolog-*standalone.jar "${uzer}@${ip}:${release_dir}/${timeztamp}"
-  scp -P ${portno} ./photolog.conf "${uzer}@${ip}:${release_dir}/${timeztamp}"
+  scp -P ${portno} ./target/photolog-*standalone.jar "${uzer}@${domain}:${release_dir}/${timeztamp}"
+  scp -P ${portno} ./photolog.conf "${uzer}@${domain}:${release_dir}/${timeztamp}"
   symlinkExtra $timeztamp
-  ssh -p${portno} ${uzer}@${ip} "sudo supervisorctl restart photolog"
+  ssh -p${portno} ${uzer}@${domain} "sudo supervisorctl restart photolog"
 }
 
 
@@ -45,7 +45,7 @@ fi
 
 uzer=${UZER?"Please provide a UZER"}
 portno=${PORTNO?"Please provide the portno"}
-ip=192.241.134.68
+domain="mattscodecave.com"
 release_dir="/var/www/photolog/releases"
 keep=5
 linked_files=(.lein-env albums logs)

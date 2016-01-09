@@ -57,9 +57,9 @@ $(document).ready(function() {
       highRes.onload = function() {
         lb.css({'background-image': 'url(' + image.prop('src').replace('thumb_', 'large_') + ')'});
       };
-      highRes.src = image.prop('src');
+      highRes.src = image.prop('src').replace('thumb_', 'large_');
 
-      lb.css({'background-image': 'url(' + image.prop('src').replace('thumb_', 'large_') + ')'});
+      lb.css({'background-image': 'url(' + image.prop('src') + ')'});
       lb.css({'background-position': '50% 50%', 'background-repeat': 'no-repeat',
               'background-size': 'contain', 'top': topY + 'px'})
               
