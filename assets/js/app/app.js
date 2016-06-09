@@ -48,7 +48,7 @@ $(document).ready(function() {
 
 
     $('.photo').on('click', function(e) {
-      var topY = ($('body').scrollTop() || $('html').scrollTop());
+      var topY = 0;
       var photo = $(e.currentTarget);
       var image = photo.find('img');
 
@@ -62,7 +62,7 @@ $(document).ready(function() {
       lb.css({'background-image': 'url(' + image.prop('src') + ')'});
       lb.css({'background-position': '50% 50%', 'background-repeat': 'no-repeat',
               'background-size': 'contain', 'top': topY + 'px'})
-              
+
       lb.css({'z-index': '5'});
       lb.css({'opacity': '1'});
     });

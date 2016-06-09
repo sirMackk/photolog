@@ -18,7 +18,7 @@
       display: inline-block;
     }
   }
-  
+
   .photo {
     margin: 0;
     padding: 0;
@@ -27,7 +27,6 @@
 
     img {
       width: 100%;
-      opacity: 0.8;
       transition: all 0.3s ease-in-out;
     }
 
@@ -46,7 +45,6 @@
 
     &:hover {
       img {
-        opacity: 1;
         cursor: pointer;
       }
 
@@ -56,8 +54,3 @@
     }
   }
 }
-
-
-
-
-
